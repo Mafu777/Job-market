@@ -1,0 +1,258 @@
+// This is your Prisma schema file
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------
+// ENUMS
+// ---------------------------
+
+enum Role {
+  JOB_SEEKER
+  EMPLOYER
+  ADMIN
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  TEMPORARY
+}
+
+enum ExperienceLevel {
+  ENTRY
+  JUNIOR
+  MID
+  SENIOR
+  EXECUTIVE
+}
+
+enum ApplicationStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  SHORTLISTED
+  INTERVIEW
+  OFFERED
+  REJECTED
+  WITHDRAWN
+}
+
+enum JobStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+  EXPIRED
+}
+
+enum JobReportStatus {
+  PENDING
+  INVESTIGATING
+  VERIFIED
+  SUSPICIOUS
+  SCAM
+  CLOSED
+}
+
+enum ContactMethod {
+  EMAIL
+  PHONE
+  EITHER
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  UNKNOWN
+}
+
+enum FeedbackDeliveryStatus {
+  NOT_SENT
+  SENT
+  FAILED
+}
+
+// ---------------------------
+// CORE USER MODEL
+// ---------------------------
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String?
+  role          Role      @default(JOB_SEEKER)
+  emailVerified DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  candidateProfile CandidateProfile?
+  company          Company?
+  notifications    Notification[]
+
+  @@index([role])
+}
+
+// ---------------------------
+// JOB SEEKER SIDE
+// ---------------------------
+
+model CandidateProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fullName    String
+  phone       String?
+  location    String?
+  headline    String?
+  bio         String?
+  cvUrl       String?
+  skills      String[]
+  experienceLevel ExperienceLevel?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  applications Application[]
+}
+
+// ---------------------------
+// EMPLOYER SIDE
+// ---------------------------
+
+model Company {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name        String
+  logoUrl     String?
+  website     String?
+  description String?
+  location    String?
+  industry    String?
+  verified    Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  jobs        Job[]
+}
+
+// ---------------------------
+// JOBS
+// ---------------------------
+
+model Job {
+  id              String          @id @default(cuid())
+  companyId       String
+  company         Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  title           String
+  description     String
+  requirements    String?
+  imageUrl        String?
+  location        String
+  remote          Boolean         @default(false)
+  jobType         JobType
+  experienceLevel ExperienceLevel
+  salaryMin       Int?
+  salaryMax       Int?
+  category        String
+  status          JobStatus       @default(DRAFT)
+  featured        Boolean         @default(false)
+  applicationUrl String?
+
+  publishedAt     DateTime?
+  expiresAt       DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  applications    Application[]
+  reports         JobReport[]
+
+  @@index([status, category])
+  @@index([location])
+}
+
+model JobReport {
+  id              String          @id @default(cuid())
+  jobUrl          String
+  jobId           String?
+  job             Job?            @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  name            String?
+  email           String?
+  phone           String?
+  contactMethod   ContactMethod
+  concern         String
+  status          JobReportStatus @default(PENDING)
+  investigatorNotes String?
+  aiRiskLevel     RiskLevel       @default(UNKNOWN)
+  aiRiskScore     Int?
+  aiReasons       String[]
+  aiSummary       String?
+  scamRadarPublished Boolean         @default(false)
+  scamRadarPublishedAt DateTime?
+  reporterFeedback String?
+  feedbackDeliveryStatus FeedbackDeliveryStatus @default(NOT_SENT)
+  feedbackSentAt  DateTime?
+  adminNotifiedAt DateTime?
+  adminNotificationError String?
+  reviewedAt      DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([status, createdAt])
+  @@index([jobUrl])
+}
+
+// ---------------------------
+// APPLICATIONS
+// ---------------------------
+
+model Application {
+  id            String            @id @default(cuid())
+  jobId         String
+  job           Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  candidateId   String
+  candidate     CandidateProfile  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  status        ApplicationStatus @default(SUBMITTED)
+  coverNote     String?
+  cvUrlSnapshot String?
+
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@unique([jobId, candidateId])
+  @@index([status])
+}
+
+// ---------------------------
+// NOTIFICATIONS
+// ---------------------------
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  link      String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+}
