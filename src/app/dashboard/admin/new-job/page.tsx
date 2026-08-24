@@ -50,10 +50,57 @@ export default function AdminNewJobPage() {
   const [salaryMax, setSalaryMax] = useState("");
   const [applicationUrl, setApplicationUrl] = useState("");
   const [featured, setFeatured] = useState(false);
+  const [sourceText, setSourceText] = useState("");
+  const [extracting, setExtracting] = useState(false);
 
   const [loadingCompanies, setLoadingCompanies] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  async function extractJobDetails(image?: string) {
+    if (!sourceText.trim() && !image) {
+      setError("Paste job details or upload an advertisement image first.");
+      return;
+    }
+
+    setError("");
+    if (image) setImageUrl(image);
+    setExtracting(true);
+    try {
+      const res = await fetch("/api/admin/jobs/extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: sourceText, image }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error ?? "Could not extract job details.");
+        return;
+      }
+
+      const job = data.job ?? {};
+      if (typeof job.companyName === "string" && job.companyName) {
+        setShowNewCompany(true);
+        setNewCompanyName(job.companyName);
+      }
+      if (typeof job.companyLocation === "string") setNewCompanyLocation(job.companyLocation);
+      if (typeof job.title === "string") setTitle(job.title);
+      if (typeof job.description === "string") setDescription(job.description);
+      if (typeof job.requirements === "string") setRequirements(job.requirements);
+      if (typeof job.location === "string") setLocation(job.location);
+      if (typeof job.remote === "boolean") setRemote(job.remote);
+      if (JOB_TYPES.some((type) => type.value === job.jobType)) setJobType(job.jobType);
+      if (EXPERIENCE_LEVELS.some((level) => level.value === job.experienceLevel)) setExperienceLevel(job.experienceLevel);
+      if (typeof job.category === "string") setCategory(job.category);
+      if (typeof job.salaryMin === "number") setSalaryMin(String(job.salaryMin));
+      if (typeof job.salaryMax === "number") setSalaryMax(String(job.salaryMax));
+      if (typeof job.applicationUrl === "string") setApplicationUrl(job.applicationUrl);
+    } catch {
+      setError("Could not reach the extraction service.");
+    } finally {
+      setExtracting(false);
+    }
+  }
 
   useEffect(() => {
     fetch("/api/admin/companies")
@@ -144,6 +191,44 @@ export default function AdminNewJobPage() {
       <p className="mt-1 text-sm text-gray-600">
         Post a job under any existing company, or create a new one on the fly.
       </p>
+
+      <section className="mt-8 rounded-lg border border-blue-200 bg-blue-50 p-4">
+        <h2 className="font-semibold text-gray-900">Create from an advertisement</h2>
+        <p className="mt-1 text-sm text-gray-600">Paste the job advert or upload its image. Check every field before publishing.</p>
+        <textarea
+          value={sourceText}
+          onChange={(e) => setSourceText(e.target.value)}
+          placeholder="Paste the full job advertisement here..."
+          rows={5}
+          className="mt-3 w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm focus:border-blue-500 focus:outline-none"
+        />
+        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              if (file.size > 2 * 1024 * 1024) {
+                setError("Please choose an image smaller than 2 MB.");
+                return;
+              }
+              const reader = new FileReader();
+              reader.onload = () => extractJobDetails(String(reader.result));
+              reader.readAsDataURL(file);
+            }}
+            className="block min-w-0 text-sm text-gray-600"
+          />
+          <button
+            type="button"
+            onClick={() => extractJobDetails()}
+            disabled={extracting}
+            className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+          >
+            {extracting ? "Reading advert..." : "Fill form from source"}
+          </button>
+        </div>
+      </section>
 
       <form
         onSubmit={(e) => {

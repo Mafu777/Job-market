@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { notifyWhatsAppSubscribers } from "@/lib/whatsapp";
 import { prisma } from "@/lib/prisma";
 
 async function requireAdmin() {
@@ -25,6 +26,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (requiredFields.some((field) => typeof body?.[field] !== "string" || !body[field].trim())) {
     return NextResponse.json({ error: "Title, description, location, category, requirements, and application link are required" }, { status: 400 });
   }
+
+  const existingJob = await prisma.job.findUnique({
+    where: { id },
+    include: { company: { select: { name: true } } },
+  });
+  if (!existingJob) return NextResponse.json({ error: "Job not found" }, { status: 404 });
 
   try {
     const url = new URL(body.applicationUrl);
@@ -53,5 +60,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       publishedAt: body.status === "PUBLISHED" ? new Date() : null,
     },
   });
+  if (existingJob.status !== "PUBLISHED" && job.status === "PUBLISHED") {
+    void notifyWhatsAppSubscribers({ ...job, company: existingJob.company });
+  }
   return NextResponse.json({ job });
 }

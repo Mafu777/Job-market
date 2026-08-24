@@ -256,3 +256,14 @@ model Notification {
 
   @@index([userId, read])
 }
+
+model WhatsAppSubscriber {
+  id             String    @id @default(cuid())
+  phone          String    @unique
+  optedIn        Boolean   @default(true)
+  lastNotifiedAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([optedIn])
+}

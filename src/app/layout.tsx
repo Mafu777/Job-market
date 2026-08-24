@@ -23,16 +23,34 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="bg-gray-50 text-gray-900 antialiased">
         <Providers>
           <header className="border-b border-gray-200 bg-white">
-            <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-              <Link href="/" className="text-lg font-bold text-gray-900">
-                JobConnect SA
-              </Link>
-              <div className="flex items-center gap-5 text-sm text-gray-600">
+            <nav className="mx-auto max-w-6xl px-4 py-3 sm:px-6 sm:py-4">
+              <div className="flex items-center justify-between gap-4">
+                <Link href="/" className="shrink-0 text-base font-bold text-gray-900 sm:text-lg">
+                  Job ConnectSA
+                </Link>
+                <details className="relative md:hidden">
+                  <summary className="cursor-pointer list-none rounded-md border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700">
+                    Menu
+                  </summary>
+                  <div className="absolute right-0 top-full z-10 mt-2 grid w-56 gap-1 rounded-md border border-gray-200 bg-white p-2 text-sm text-gray-600 shadow-lg">
+                    <Link href="/jobs" className="rounded px-3 py-2 hover:bg-gray-50 hover:text-blue-600">
+                      Find jobs
+                    </Link>
+                    <Link href="/about" className="rounded px-3 py-2 hover:bg-gray-50 hover:text-blue-600">
+                      About
+                    </Link>
+                    <Link href="/contact" className="rounded px-3 py-2 hover:bg-gray-50 hover:text-blue-600">
+                      Contact
+                    </Link>
+                    <Link href="/scam-radar" className="rounded px-3 py-2 hover:bg-gray-50 hover:text-blue-600">
+                      Scam Radar
+                    </Link>
+                  </div>
+                </details>
+              </div>
+              <div className="hidden items-center justify-end gap-4 pt-1 text-sm text-gray-600 md:flex lg:gap-5">
                 <Link href="/jobs" className="hover:text-blue-600">
                   Find jobs
-                </Link>
-                <Link href="/bursaries" className="hover:text-blue-600">
-                  Bursaries
                 </Link>
                 <Link href="/about" className="hover:text-blue-600">
                   About
@@ -42,12 +60,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </Link>
                 <Link href="/scam-radar" className="hover:text-blue-600">
                   Scam Radar
-                </Link>
-                <Link href="/career/cv-builder" className="hover:text-blue-600">
-                  Career tools
-                </Link>
-                <Link href="/login" className="font-medium text-blue-600 hover:text-blue-700">
-                  Admin login
                 </Link>
               </div>
             </nav>

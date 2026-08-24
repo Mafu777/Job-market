@@ -1,4 +1,5 @@
 import Link from "next/link";
+import WhatsAppAlerts from "@/components/WhatsAppAlerts";
 
 const popularCategories = [
   { label: "Matric Jobs", href: "/jobs?query=matric" },
@@ -96,6 +97,7 @@ export default function HomePage() {
 
         </div>
       </section>
+      <WhatsAppAlerts />
     </main>
   );
 }

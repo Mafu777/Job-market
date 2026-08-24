@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { notifyWhatsAppSubscribers } from "@/lib/whatsapp";
 
 // POST /api/admin/jobs — admin creates a job under any company
 export async function POST(req: Request) {
@@ -61,6 +62,10 @@ applicationUrl: jobFields.applicationUrl || null,
 publishedAt: jobFields.status === "PUBLISHED" ? new Date() : null,
 },
 });
+
+if (job.status === "PUBLISHED") {
+void notifyWhatsAppSubscribers({ ...job, company });
+}
 
 return NextResponse.json(job, { status: 201 });
 }

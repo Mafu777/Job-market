@@ -20,6 +20,19 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## WhatsApp job alerts
+
+The home page includes an opt-in form for WhatsApp job alerts. To send messages when an admin publishes a job, create and approve a WhatsApp Business message template with four body variables, then add these server-side environment variables:
+
+```env
+WHATSAPP_ACCESS_TOKEN="your_meta_cloud_api_token"
+WHATSAPP_PHONE_NUMBER_ID="your_meta_phone_number_id"
+WHATSAPP_TEMPLATE_NAME="your_approved_template_name"
+WHATSAPP_TEMPLATE_LANGUAGE="en_US"
+```
+
+The template body variables are job title, company name, location, and job URL. Without these variables, subscriptions are stored but messages are not sent. Users must explicitly opt in and can unsubscribe from the same form.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
